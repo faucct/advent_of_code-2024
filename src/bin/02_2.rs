@@ -14,20 +14,18 @@ fn sum(reader: impl std::io::BufRead) -> usize {
                 .map(|next| next - std::mem::replace(&mut prev, next))
                 .collect::<Vec<_>>();
             fn kind(diff: i32) -> usize {
-                if diff == 0 {
-                    0
-                } else if (-3..=-1).contains(&diff) {
-                    1
-                } else if (1..=3).contains(&diff) {
+                if (-3..=-1).contains(&diff) {
                     2
+                } else if (1..=3).contains(&diff) {
+                    1
                 } else {
-                    3
+                    0
                 }
             }
-            fn all_good(kinds: [i32; 4]) -> bool {
-                kinds[0] == 0 && kinds[3] == 0 && (kinds[1] == 0 || kinds[2] == 0)
+            fn all_good(kinds: [i32; 3]) -> bool {
+                kinds[0] == 0 && (kinds[1] == 0 || kinds[2] == 0)
             }
-            let mut kinds = [0; 4];
+            let mut kinds = [0; 3];
             for &diff in &diffs {
                 kinds[kind(diff)] += 1;
             }
