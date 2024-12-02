@@ -6,28 +6,58 @@ fn sum(reader: impl std::io::BufRead) -> usize {
             if line.is_empty() {
                 return false;
             }
-            let levels = line
+            let mut levels = line
                 .split_ascii_whitespace()
                 .map(|level| level.parse::<i32>().unwrap());
-            (0..levels.clone().count()).any(|removed| {
-                let mut levels =
-                    levels.clone()
-                        .enumerate()
-                        .filter_map(|(i, level)| if removed == i { None } else { Some(level) });
-                let start = levels.next().unwrap();
-                let mut prev = levels.next().unwrap();
-                if !(-3..=3).contains(&(prev - start)) || prev == start {
-                    return false;
+            let mut prev = levels.next().unwrap();
+            let diffs = levels
+                .map(|next| next - std::mem::replace(&mut prev, next))
+                .collect::<Vec<_>>();
+            fn kind(diff: i32) -> usize {
+                if diff == 0 {
+                    0
+                } else if (-3..=-1).contains(&diff) {
+                    1
+                } else if (1..=3).contains(&diff) {
+                    2
+                } else {
+                    3
                 }
-                let increasing = prev - start > 0;
-                levels.all(|next| {
-                    if !if increasing { 1..=3 } else { -3..=-1 }.contains(&(next - prev)) {
-                        return false;
-                    }
-                    prev = next;
-                    true
-                })
-            })
+            }
+            fn all_good(kinds: [i32; 4]) -> bool {
+                kinds[0] == 0 && kinds[3] == 0 && (kinds[1] == 0 || kinds[2] == 0)
+            }
+            let mut kinds = [0; 4];
+            for &diff in &diffs {
+                kinds[kind(diff)] += 1;
+            }
+            if all_good(kinds) {
+                return true;
+            }
+            let mut diffs = diffs.into_iter();
+            let mut prev = diffs.next().unwrap();
+            kinds[kind(prev)] -= 1;
+            if all_good(kinds) {
+                return true;
+            }
+            kinds[kind(prev)] += 1;
+            for next in diffs {
+                kinds[kind(prev)] -= 1;
+                kinds[kind(next)] -= 1;
+                kinds[kind(next + prev)] += 1;
+                if all_good(kinds) {
+                    return true;
+                }
+                kinds[kind(prev)] += 1;
+                kinds[kind(next)] += 1;
+                kinds[kind(next + prev)] -= 1;
+                prev = next;
+            }
+            kinds[kind(prev)] -= 1;
+            if all_good(kinds) {
+                return true;
+            }
+            false
         })
         .count()
 }
