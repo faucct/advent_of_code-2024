@@ -12,14 +12,17 @@ fn sum(reader: impl std::io::BufRead) -> i128 {
                 .split_whitespace()
                 .map(|number| number.parse::<i128>().unwrap())
                 .collect::<Vec<_>>();
-            fn rec(test_value: i128, mul: i128, numbers: &[i128]) -> bool {
-                if test_value < mul {
+            fn rec(test_value: i128, first: i128, numbers: &[i128]) -> bool {
+                if test_value < 0 {
                     return false;
                 }
-                if let Some((&head, tail)) = numbers.split_first() {
-                    rec(test_value, head.saturating_add(mul), tail) || rec(test_value, mul.saturating_mul(head), tail)
+                if let Some((&last, rest)) = numbers.split_last() {
+                    if test_value % last == 0 && rec(test_value / last, first, rest) {
+                        return true;
+                    }
+                    rec(test_value.saturating_sub(last), first, rest)
                 } else {
-                    test_value == mul
+                    test_value == first
                 }
             }
 
